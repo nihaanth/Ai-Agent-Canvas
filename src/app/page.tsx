@@ -1,7 +1,8 @@
 'use client'
-import { useState } from 'react' 
-import { ReactFlow, Handle, Position, useNodesState, useEdgesState, useCallback } from '@xyflow/react'
-
+import { useCallback, useState } from 'react' 
+import { ReactFlow, Handle, Position, useNodesState, useEdgesState , addEdge, Connection } from '@xyflow/react'
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/app-sidebar"
 import '@xyflow/react/dist/style.css'
 
 
@@ -49,19 +50,35 @@ const nodeTypes = {
 export default function Home() {
  const [edges,setEdges,onEdgesChange] = useEdgesState(initialEdges)
  const [nodes,setNodes,onNodesChange] = useNodesState(initialNodes)
+ const onDragOver = (e: React.DragEvent) => e.preventDefault()
+ const onConnect = useCallback((connection: Connection) => {
+  setEdges((prev) => addEdge(connection, prev))
+ }, [setEdges])
+
+ const onDrop = useCallback((e: React.DragEvent) => {
+  e.preventDefault()
+  const name = e.dataTransfer.getData('componentName')
+  const newNode = {
+    id: String(Date.now()),
+    type: 'agentCard',
+    position: { x: e.clientX - 250, y: e.clientY - 50 },
+    data: { label: name }
+  }
+  setNodes((prev) => [...prev, newNode])
+}, [setNodes])
+
   return (
 
-    
-    <div className="p-8 bg-gray-900 min-h-screen">
-       <div style={{ width: '100vw', height: '100vh' }}>
-    <ReactFlow className="text-Black text-2xl font-bold mb-6" nodes = {nodes} edges = {edges} nodeTypes = {nodeTypes} onNodesChange = {onNodesChange} onEdgesChange = {onEdgesChange}/></div>
-      {/* <h1 className="text-white text-2xl font-bold mb-6">Agent Dashboard</h1> */}
-      {/* <div className="flex gap-4">
-        <AgentCard name="Research Agent" />
-        <AgentCard name="Writer Agent" />
-        <AgentCard name= "Review Agent" />
-      </div> */}
+   <SidebarProvider>
+    <div className="flex h-screen w-screen">
+      <AppSidebar />
+      <div style={{ flex: 1, height: '100vh' }}>
+        <ReactFlow nodes={nodes} 
+        edges={edges} nodeTypes={nodeTypes} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} 
+        onDragOver = {onDragOver} onDrop = {onDrop} onConnect={onConnect} />
+      </div>
     </div>
+  </SidebarProvider>
   )
 }
 
